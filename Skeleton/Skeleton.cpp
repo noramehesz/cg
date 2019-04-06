@@ -418,9 +418,11 @@ public:
 
 	vec2 attachetopedal;
 	vec2 knee;
-	float speed;
+	vec2 speed;
 	float rotation;
 	float leglong;
+	bool state;
+	float rot;
 
 	Circle circle;
 	CycleUser body;
@@ -428,12 +430,15 @@ public:
 	Leg() {}
 
 	Leg(Circle c, CycleUser cu){
+		glGenBuffers(1, &vbo); //generat a buffer 
 		circle = c;
 		body = cu;
-		attachetobody = body.seet.seettop;
-		pedalradius = c.radius / 2.0f;
+		attachetobody = vec2(c.center.x, c.center.y + c.radius + 0.03f);
+		pedalradius = c.radius / 3.0f;
 		leglong = 2.0f * c.radius / 3;
 		color = body.color;
+		attachetopedal = vec2(c.center.x, c.center.y-pedalradius);
+		state = false; //jobbra
 	}
 
 	float MVPtransf[4][4] = { 1, 0, 0, 0,    // MVP matrix, 
@@ -441,55 +446,134 @@ public:
 							  0, 0, 1, 0,
 							  0, 0, 0, 1 };
 
+	void Animation(float r, float transl) {
+		
+		if (state == false) {
+			rot = r;
+			speed.x -= transl;
+			if (speed.x < -1.0f) {
+				state = true;
+			}
+		}
+
+		if (state == true) {
+			rot = -r;
+			speed.x += transl;
+			if (speed.x > 1.0f) {
+				state = false;
+			}
+		}
+
+	}
+
 	void Update() {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
+		MVPtransf[3][0] = speed.x;
+
+		float x = attachetopedal.x;
+		float y = attachetopedal.y;
+
+		//attachetopedal.x = x * cosf(rot) - y * sinf(rot);
+		//attachetopedal.y = x * sinf(rot) + y * cosf(rot);
+
 		float vertices[25];
-/*
-		vertices[0] = attachetobody.x;
-		vertices[1] = attachetobody.x;
+
+		if (state == false) {
+			attachetopedal.x = circle.center.x - pedalradius;
+			knee.x = attachetobody.x - 0.05f;
+			knee.y = (attachetobody.y + (x * sinf(rot) + y * cosf(rot))) / 2;
+		}
+		if (state == true) {
+			attachetopedal.x = circle.center.x + pedalradius;
+			knee.x = attachetobody.x +0.05f;
+			knee.y = (attachetobody.y + (x * sinf(rot) + y * cosf(rot))) / 2;
+		}
+
+		vertices[0] = x * cosf(rot) - y * sinf(rot);
+		vertices[1] = x * sinf(rot) + y * cosf(rot);
 		vertices[2] = color.x;
 		vertices[3] = color.y;
 		vertices[4] = color.z;
 
-			vertices[5] = 
-			vertices[6]
-			vertices[7]
-			vertices[8]
-			vertices[9]
+		vertices[5] = knee.x;
+		vertices[6] = knee.y; 
+		vertices[7] = color.x;
+		vertices[8] = color.y;
+		vertices[9] = color.z;
+
+		vertices[10] = attachetobody.x;
+		vertices[11] = attachetobody.y;
+		vertices[12] = color.x;
+		vertices[13] = color.y;
+		vertices[14] = color.z;
 
 
-			vertices[10]
-			vertices[11]
-			vertices[12]
-			vertices[13]
-			vertices[14]
+		glBufferData(GL_ARRAY_BUFFER, 	// Copy to GPU target
+			sizeof(vertices),           // # bytes
+			vertices,	      	        // address
+			GL_STATIC_DRAW);	      	// we do not change later
+	}
+
+	void Draw() {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glEnableVertexAttribArray(0);  // AttribArray 0
+		glVertexAttribPointer(0,       // vbo -> AttribArray 0
+			2, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+			5 * sizeof(float), NULL);
+
+		glEnableVertexAttribArray(1);  // AttribArray 0
+		glVertexAttribPointer(1,       // vbo -> AttribArray 0
+			3, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+			5 * sizeof(float), (void *)(2 * sizeof(float)));
 
 
-			vertices[15]
-			vertices[16]
-			vertices[17]
-			vertices[18]
-			vertices[19]
-
-*/
+		glDrawArrays(GGL_STRING, 0 /*startIdx*/, 3/*# Elements*/);
 	}
 
 };
 
-	class LineStrip {
-		unsigned int vao;
-		unsigned int vbo;
-		std::vector<float> vertexData;
-		float tension;
+class LineStrip {
+	unsigned int vbo;
+	std::vector<vec2> controlpoints;
+	std::vector<vec2> linepoints;
 
-	public:
+	float p0, p1, p2, p3;
+	float tension;
+
+public:
+
+	LineStrip() {}
+	LineStrip(std::vector<vec2> ctrlps, float _tension) {
+		tension = _tension;
+		controlpoints = ctrlps;
+	}
+
+	std::vector<vec2> GetLinePoints(float t,
+		vec2 p0,
+		vec2 p1,
+		vec2 p2,
+		vec2 p3
+	) {
+
+		float tt = t * t;
+		float ttt = tt * t;
+
+		float q1 = -ttt + 2.0f*tt - t;
+		float q2 = 3.0f*ttt - 5.0f*tt + 2.0f;
+		float q3 = -3.0f*ttt + 4.0f*tt + t;
+		float q4 = ttt - tt;
+
+		
+
+	}
+
+
 		void AddPoint(float cX, float cY) {
-			vertexData.push_back(cX);
-			vertexData.push_back(cY);
+			controlpoints.push_back(cX);
+			controlpoints.push_back(cY);
 
-			glBindBuffer(GL_ARRAY_BUFFER, vbo);
-			glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), &vertexData[0], GL_DYNAMIC_DRAW);
+		
 		}
 	};
 
@@ -500,6 +584,7 @@ public:
 	LineStrip path;
 	Seet seet;
 	CycleUser bela;
+	Leg belalegs;
 
 	// Initialization, create an OpenGLcontext
 	void onInitialization() {
@@ -510,13 +595,16 @@ public:
 
 	
 		//kerék
-		ccc = Circle(0.14f, vec2(0.0f, 0.0f), vec3(1.0f, 0.0f, 0.0f));
+		ccc = Circle(0.08f, vec2(0.0f, 0.0f), vec3(1.0f, 0.0f, 0.0f));
 
 		//ülés
 		seet = Seet(ccc);
 
 		//ember
 		bela = CycleUser(seet);
+
+		//laba
+		belalegs = Leg(ccc, bela);
 		
 
 
@@ -563,6 +651,11 @@ public:
 		bela.Update();
 		bela.Draw();
 
+		location = glGetUniformLocation(gpuProgram.getId(), "MVP");
+		glUniformMatrix4fv(location, 1, GL_TRUE, &belalegs.MVPtransf[0][0]);
+
+		belalegs.Update();
+		belalegs.Draw();
 
 		glutSwapBuffers(); // exchange buffers for double buffering
 	}
@@ -614,12 +707,13 @@ public:
 	// Idle event indicating that some time elapsed: do animation here
 	void onIdle() {
 		long time = glutGet(GLUT_ELAPSED_TIME); // elapsed time since the start of the program
-		float sec = time / 350.0f;  //ez lesz a forgás sebessége? 
+		float sec = time / 250.0f;  //ez lesz a forgás sebessége? 
 
 		//ide a dolgok
 		ccc.Animate(sec, 0.0003f);
 		seet.Animate(0.0003f);
 		bela.Animate(0.0003f);
+		belalegs.Animation(sec, 0.0003f);
 
 		glutPostRedisplay();
 	}
