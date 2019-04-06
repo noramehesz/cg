@@ -541,15 +541,23 @@ class LineStrip {
 	float p0, p1, p2, p3;
 	float tension;
 
+	vec3 color;
+
+	std::vector<float> vertices;
+
 public:
 
 	LineStrip() {}
+
 	LineStrip(std::vector<vec2> ctrlps, float _tension) {
 		tension = _tension;
 		controlpoints = ctrlps;
+		color = vec3(0.0f, 1.0f, 0.0f);
+		
+		//AddPoint(1.3f, 0.5f);
 	}
 
-	std::vector<vec2> GetLinePoints(float t,
+		vec2 GetLinePoint(float t,
 		vec2 p0,
 		vec2 p1,
 		vec2 p2,
@@ -559,21 +567,100 @@ public:
 		float tt = t * t;
 		float ttt = tt * t;
 
-		float q1 = -ttt + 2.0f*tt - t;
-		float q2 = 3.0f*ttt - 5.0f*tt + 2.0f;
-		float q3 = -3.0f*ttt + 4.0f*tt + t;
+		float q1 = 2 * ttt - 3.0f*tt - 1.0f ;
+		float q2 = ttt - 2.0f*tt + t;
+		float q3 = -2.0f*ttt + 3.0f*tt;
 		float q4 = ttt - tt;
 
 		
-
-	}
-
-
-		void AddPoint(float cX, float cY) {
-			controlpoints.push_back(cX);
-			controlpoints.push_back(cY);
+		vec2 d0 = (p1 - p0) * (1.0f - tension) + (p2 - p1) * (1.0f - tension);
+		vec2 d1 = (p2 - p1) * (1.0f - tension) + (p3 - p2) * (1.0f - tension);
 
 		
+		return (p1 * q1 + p2* d0 + p3 * q3 + d1 * q4);
+	}
+
+		void pointsofspline() {
+
+			for (int i = 1; i < controlpoints.size()-2; i++) {
+				float s = 1.0f / 200.0f ;
+				for (float j = 0; j < 1.0f ; j += s) {
+					vec2 p = GetLinePoint(j, controlpoints[i - 1], controlpoints[i], controlpoints[i + 1], controlpoints[i + 2]);
+					linepoints.push_back(p);
+				}
+			}
+		}
+
+		std::vector<vec2> makeline() {
+			pointsofspline();
+			return linepoints;
+		}
+
+		bool greaterthan(vec2 first, vec2 second) {
+			if (first.x > second.x) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+
+		void sort(std::vector<vec2> needsort) {
+			for (int i = needsort.size()-1; i > 0 ; --i) {
+				for (int j = 0; j < i; j++) {
+					if (greaterthan(needsort[j], needsort[j + 1])) {
+						vec2 temp = needsort[j];
+						needsort[j] = needsort[j + 1];
+						needsort[j + 1] = temp;
+					}
+				}
+			}
+		}
+
+		void AddPoint(float cX, float cY) {
+			controlpoints.push_back(vec2(cX, cY));
+			sort(controlpoints);
+		
+		}
+
+		void Update() {
+			
+			std::vector<vec2> tmp;
+			tmp = makeline();
+
+			for (int i = 0; i < tmp.size(); i++) {
+				vertices.push_back(linepoints[i].x);
+				vertices.push_back(linepoints[i].y);
+				vertices.push_back(color.x);
+				vertices.push_back(color.y);
+				vertices.push_back(color.z);
+			}
+
+			
+		}
+			
+
+		void Draw() {
+
+			glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+			glBufferData(GL_ARRAY_BUFFER, 	// Copy to GPU target
+				sizeof(vertices),           // # bytes
+				&vertices[0],	      	        // address
+				GL_STATIC_DRAW);	      	// we do not change later
+			
+			glEnableVertexAttribArray(0);  // AttribArray 0
+			glVertexAttribPointer(0,       // vbo -> AttribArray 0
+				2, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+				5 * sizeof(float), NULL);
+
+			glEnableVertexAttribArray(1);  // AttribArray 0
+			glVertexAttribPointer(1,       // vbo -> AttribArray 0
+				3, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+				5 * sizeof(float), (void *)(2 * sizeof(float)));
+
+			glDrawArrays(GL_LINE_STRIP, 0 /*startIdx*/, linepoints.size()  /*# Elements*/);
+
 		}
 	};
 
@@ -582,6 +669,7 @@ public:
 
 	Circle ccc;
 	LineStrip path;
+	LineStrip mountain;
 	Seet seet;
 	CycleUser bela;
 	Leg belalegs;
@@ -606,7 +694,8 @@ public:
 		//laba
 		belalegs = Leg(ccc, bela);
 		
-
+		path = LineStrip({ vec2(-2.0f, 0.0f), vec2(-1.3f, -0.6f), vec2(1.3f, -0.6f), vec2(2.0f, 0.0f) }, -1.0f);
+		path.Update();
 
 		// create program for the GPU
 		gpuProgram.Create(vertexSource, fragmentSource, "outColor");
@@ -633,6 +722,11 @@ public:
 		//glBindVertexArray(vao);  // Draw call
 		//glDrawArrays(GL_TRIANGLES, 0 /*startIdx*/, 3 /*# Elements*/);
 
+		location = glGetUniformLocation(gpuProgram.getId(), "MVP");
+		glUniformMatrix4fv(location, 1, GL_TRUE, &MVPtransf[0][0]);
+
+		path.Draw();
+
 		location = glGetUniformLocation(gpuProgram.getId(), "MVP"); // Get the GPU location of uniform variable MVP
 		glUniformMatrix4fv(location, 1, GL_TRUE, &ccc.MVPtransf[0][0]);	// Load a 4x4 row-major float matrix to the specified location
 
@@ -656,6 +750,9 @@ public:
 
 		belalegs.Update();
 		belalegs.Draw();
+
+		
+
 
 		glutSwapBuffers(); // exchange buffers for double buffering
 	}
