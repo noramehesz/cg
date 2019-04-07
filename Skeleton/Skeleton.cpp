@@ -597,10 +597,16 @@ public:
 		float q4 = ttt - tt;
 
 		
-		vec2 d0 = (p1 - p0) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + (p2 - p1) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
-		vec2 d1 = (p2 - p1) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + (p3 - p2) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
+		//vec2 d0 = (p1 - p0) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + (p2 - p1) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
+		//vec2 d1 = (p2 - p1) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + (p3 - p2) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
 
-		vec2  res = p1 * q1 + d0 * q2 + p2 * q3 + d1 * q4;
+		vec2 d0 = ((p1 - p0) * (1.0f / (p1.x - p0.x))) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + ((p2 - p1) * (1.0f / (p2.x - p1.x))) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
+		vec2 d1 = ((p2 - p1) * (1.0f / (p2.x - p1.x))) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + ((p3 - p2) * (1.0f / (p3.x - p2.x))) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
+
+		vec2 D0 = normalize(d0);
+		vec2 D1 = normalize(d1);
+
+		vec2  res = p1 * q1 + D0 * q2 + p2 * q3 + D1 * q4;
 		
 		return(res);
 	}
@@ -731,7 +737,7 @@ public:
 		//laba
 		belalegs = Leg(ccc, bela);
 		
-		path = LineStrip({ vec2(-2.0f, 0.0f), vec2(-1.5f, -0.8f), vec2(1.7f, -0.6f), vec2(2.0f, 0.0f) }, -0.5f);
+		path = LineStrip({ vec2(-2.0f, 0.0f), vec2(-1.5f, -0.8f), vec2(1.7f, -0.6f), vec2(2.0f, 0.0f) }, -0.1f);
 		path.Update();
 
 		mountain = LineStrip({ vec2(-2.0f, 0.32f), vec2(-1.5f, -0.48f), vec2(1.7f, -0.28f), vec2(2.0f, 0.32f) }, 0.5f);
@@ -851,12 +857,18 @@ public:
 
 		monocyclepos = vec2( ccc.center.x + ccc.speed.x,  ccc.center.y + ccc.speed.y - ccc.radius );
 		for (int i = 0; i < path.linepoints.size(); i++) {
-			if (monocyclepos.x < path.linepoints[i].x + 0.01f && monocyclepos.x > path.linepoints[i].x - 0.01f) {
-				diff = (-1.0f * (monocyclepos.y - path.linepoints[i].y)) ;
+			if (monocyclepos.x < path.linepoints[i].x + 0.1f && monocyclepos.x > path.linepoints[i].x - 0.1f) {
+				if ((-1.0f * (monocyclepos.y - path.linepoints[i].y)) != 0.0f) {
+					diff = (-1.0f * (monocyclepos.y - path.linepoints[i].y));
+				}
+				else
+				{
+					break;
+				}
 			}
 		}
 		
-		//printf("\n %f ", diff);
+		//printf("\n %f", diff);
 
 
 		//ide a dolgok
