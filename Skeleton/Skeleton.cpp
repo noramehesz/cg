@@ -18,8 +18,8 @@
 //
 // NYILATKOZAT
 // ---------------------------------------------------------------------------------------------
-// Nev    : 
-// Neptun : 
+// Nev    :  Méhész Nóra
+// Neptun :  HVIQX7
 // ---------------------------------------------------------------------------------------------
 // ezennel kijelentem, hogy a feladatot magam keszitettem, es ha barmilyen segitseget igenybe vettem vagy
 // mas szellemi termeket felhasznaltam, akkor a forrast es az atvett reszt kommentekben egyertelmuen jeloltem.
@@ -83,7 +83,7 @@ public:
 	Circle() {};
 
 	Circle(float r, vec2 c,vec3 col) {
-		glGenBuffers(1, &vbo); //generat a buffer 
+		glGenBuffers(1, &vbo);  
 		radius = r;
 		center = c; 
 		color = col;
@@ -95,11 +95,10 @@ public:
 	void Animate(float rot, float transl, float pos) {
 
 		
-
+		speed.y = pos;
 			if (state == false ) {
 				rotation = rot;
 				speed.x -= transl;
-				speed.y = pos;
 				if (speed.x < -1.0f) {
 					state = true;
 				}
@@ -108,7 +107,6 @@ public:
 			if(state == true){
 				rotation = -rot;
 				speed.x += transl;
-				speed.y = pos;
 				if (speed.x > 1.0f) {
 					state = false;
 				}
@@ -117,27 +115,27 @@ public:
 	}
 
 
-	float MVPtransf[4][4] = { 1, 0, 0, 0,    // MVP matrix, 
-							  0, 1, 0, 0,    // row-major!
+	float MVPtransf[4][4] = { 1, 0, 0, 0,    
+							  0, 1, 0, 0,    
 							  0, 0, 1, 0,
 							  0, 0, 0, 1 };
 
 
-	void Update() {
-
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	void Create() {
 
 		MVPtransf[0][0] = cosf(rotation);
 		MVPtransf[0][1] = sinf(rotation);
 		MVPtransf[1][0] = -sinf(rotation);
 		MVPtransf[1][1] = cosf(rotation);
-
 		MVPtransf[3][0] = speed.x;
 		MVPtransf[3][1] = speed.y;
+		
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 		float radian = 2 * M_PI;
 		float vertices[655];
 		for (int i = 0; i < 596;  i += 5) {
+
 			vertices[i] = center.x + cosf(i * radian / (float)120) * radius;
 			vertices[i + 1] = center.y + sinf(i * radian / (float)120) * radius;
 			vertices[i + 2] = color.x;
@@ -189,22 +187,22 @@ public:
 	
 		
 
-		glBufferData(GL_ARRAY_BUFFER, 	// Copy to GPU target
-			sizeof(vertices),           // # bytes
-			vertices,	      	        // address
-			GL_STATIC_DRAW);	      	// we do not change later
+		glBufferData(GL_ARRAY_BUFFER, 	
+			sizeof(vertices),           
+			vertices,	      	        
+			GL_STATIC_DRAW);	      	
 	}
 
 	void Draw() {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glEnableVertexAttribArray(0);  // AttribArray 0
-		glVertexAttribPointer(0,       // vbo -> AttribArray 0
-			2, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+		glEnableVertexAttribArray(0);  
+		glVertexAttribPointer(0,       
+			2, GL_FLOAT, GL_FALSE, 
 			5 * sizeof(float), NULL);
 
-		glEnableVertexAttribArray(1);  // AttribArray 0
-		glVertexAttribPointer(1,       // vbo -> AttribArray 0
-			3, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+		glEnableVertexAttribArray(1);  
+		glVertexAttribPointer(1,      
+			3, GL_FLOAT, GL_FALSE, 
 			5 * sizeof(float), (void *)(2 * sizeof(float)));
 
 
@@ -226,20 +224,20 @@ public:
 	Seet(){}
 
 	Seet(Circle circle) {
-		glGenBuffers(1, &vbo); //generat a buffer 
+		glGenBuffers(1, &vbo);
 		c = circle; 
-		cbase = c.center;  //printf("%d %d", cbase.x, cbase.y);
-		color = circle.color; // printf("%f %f %f ", color.x, color.y, color.z);
+		cbase = c.center; 
+		color = circle.color; 
 		seettop = (cbase.x, cbase.y + circle.radius + 0.03f);
 		speed = vec2(0.0f, 0.0f);
 		state = false;
 	}
 
 	void Animate(float transl, float pos) {
-		
+		speed.y = pos;
 		if (state == false) {
 			speed.x -= transl;
-			speed.y = pos;
+
 			if (speed.x < -1.0f) {
 				state = true;
 			}
@@ -247,7 +245,7 @@ public:
 
 		if (state == true) {
 			speed.x += transl;
-			speed.y = pos;
+		
 			if (speed.x > 1.0f) {
 				state = false;
 			}
@@ -255,16 +253,18 @@ public:
 
 	}
 
-	float MVPtransf[4][4] = { 1, 0, 0, 0,    // MVP matrix, 
-							  0, 1, 0, 0,    // row-major!
+	float MVPtransf[4][4] = { 1, 0, 0, 0,    
+							  0, 1, 0, 0,    
 							  0, 0, 1, 0,
 							  0, 0, 0, 1 };
 
-	void Update() {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	void Create() {
+		
 
 		MVPtransf[3][0] = speed.x;
 		MVPtransf[3][1] = speed.y;
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 		float vertices[20];
 
@@ -292,23 +292,23 @@ public:
 		vertices[18] = color.y;
 		vertices[19] = color.z;
 
-		glBufferData(GL_ARRAY_BUFFER, 	// Copy to GPU target
-			sizeof(vertices),           // # bytes
-			vertices,	      	        // address
-			GL_STATIC_DRAW);	      	// we do not change later
+		glBufferData(GL_ARRAY_BUFFER, 	
+			sizeof(vertices),           
+			vertices,	      	        
+			GL_STATIC_DRAW);	      	
 
 	}
 
 	void Draw() {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glEnableVertexAttribArray(0);  // AttribArray 0
-		glVertexAttribPointer(0,       // vbo -> AttribArray 0
-			2, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+		glEnableVertexAttribArray(0);  
+		glVertexAttribPointer(0,       
+			2, GL_FLOAT, GL_FALSE, 
 			5 * sizeof(float), NULL);
 
-		glEnableVertexAttribArray(1);  // AttribArray 0
-		glVertexAttribPointer(1,       // vbo -> AttribArray 0
-			3, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+		glEnableVertexAttribArray(1);  
+		glVertexAttribPointer(1,       
+			3, GL_FLOAT, GL_FALSE, 
 			5 * sizeof(float), (void *)(2 * sizeof(float)));
 
 
@@ -330,25 +330,24 @@ public:
 
 	CycleUser(){}
 
-	float MVPtransf[4][4] = { 1, 0, 0, 0,    // MVP matrix, 
-							  0, 1, 0, 0,    // row-major!
+	float MVPtransf[4][4] = { 1, 0, 0, 0,    
+							  0, 1, 0, 0,    
 							  0, 0, 1, 0,
 							  0, 0, 0, 1 };
 
 	CycleUser(Seet s) {
-		glGenBuffers(1, &vbo); //generat a buffer 
+		glGenBuffers(1, &vbo);
 		seet = s;
-		color = vec3(255.0f, 174.0f, 201.0f);
+		color = vec3(255, 255, 255);
 		radiusofhead =  s.c.radius / 2.0f;
 		centerofhead = vec2(seet.c.center.x, seet.c.center.y + 2.0f * seet.c.radius + 0.03f + radiusofhead);
 		speed = vec2(0.0f, 0.0f);
-		state = false; //kezdetben jobbra 
+		state = false; 
 	}
 
 	void Animate(float transl, float pos) {
-	
+		speed.y = pos;
 		if (state == false) {
-			speed.y = pos;
 			speed.x -= transl;
 			if (speed.x < -1.0f) {
 				state = true;
@@ -356,7 +355,6 @@ public:
 		}
 
 		if (state == true) {
-			speed.y = pos;
 			speed.x += transl;
 			if (speed.x > 1.0f) {
 				state = false;
@@ -365,11 +363,13 @@ public:
 
 	}
 
-	void Update() {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	void Create() {
+		
 
 		MVPtransf[3][0] = speed.x;
 		MVPtransf[3][1] = speed.y;
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 		float radian = 2 * M_PI;
 		float vertices[610];
@@ -395,23 +395,23 @@ public:
 			}
 
 
-			glBufferData(GL_ARRAY_BUFFER, 	// Copy to GPU target
-				sizeof(vertices),           // # bytes
-				vertices,	      	        // address
-				GL_STATIC_DRAW);	      	// we do not change later
+			glBufferData(GL_ARRAY_BUFFER, 	
+				sizeof(vertices),           
+				vertices,	      	        
+				GL_STATIC_DRAW);	      	
 
 	}
 
 	void Draw() {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glEnableVertexAttribArray(0);  // AttribArray 0
-		glVertexAttribPointer(0,       // vbo -> AttribArray 0
-			2, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+		glEnableVertexAttribArray(0);  
+		glVertexAttribPointer(0,       
+			2, GL_FLOAT, GL_FALSE,
 			5 * sizeof(float), NULL);
 
-		glEnableVertexAttribArray(1);  // AttribArray 0
-		glVertexAttribPointer(1,       // vbo -> AttribArray 0
-			3, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+		glEnableVertexAttribArray(1);  
+		glVertexAttribPointer(1,     
+			3, GL_FLOAT, GL_FALSE, 
 			5 * sizeof(float), (void *)(2 * sizeof(float)));
 
 
@@ -444,7 +444,7 @@ public:
 	Leg() {}
 
 	Leg(Circle c, CycleUser cu){
-		glGenBuffers(1, &vbo); //generat a buffer 
+		glGenBuffers(1, &vbo); 
 		circle = c;
 		body = cu;
 		attachetobody = vec2(c.center.x, c.center.y + c.radius + 0.03f);
@@ -455,17 +455,17 @@ public:
 		state = false; //jobbra
 	}
 
-	float MVPtransf[4][4] = { 1, 0, 0, 0,    // MVP matrix, 
-							  0, 1, 0, 0,    // row-major!
+	float MVPtransf[4][4] = { 1, 0, 0, 0,    
+							  0, 1, 0, 0,    
 							  0, 0, 1, 0,
 							  0, 0, 0, 1 };
 
 	void Animation(float r, float transl, float pos) {
-		
+		speed.y = pos;
 		if (state == false) {
 			rot = r;
 			speed.x -= transl;
-			speed.y = pos;
+
 			if (speed.x < -1.0f) {
 				state = true;
 			}
@@ -474,7 +474,6 @@ public:
 		if (state == true) {
 			rot = -r;
 			speed.x += transl;
-			speed.y = pos;
 			if (speed.x > 1.0f) {
 				state = false;
 			}
@@ -482,17 +481,17 @@ public:
 
 	}
 
-	void Update() {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	void Create() {
+		
 
 		MVPtransf[3][0] = speed.x;
 		MVPtransf[3][1] = speed.y;
 
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
 		float x = attachetopedal.x;
 		float y = attachetopedal.y;
 
-		//attachetopedal.x = x * cosf(rot) - y * sinf(rot);
-		//attachetopedal.y = x * sinf(rot) + y * cosf(rot);
 
 		float vertices[25];
 
@@ -526,22 +525,22 @@ public:
 		vertices[14] = color.z;
 
 
-		glBufferData(GL_ARRAY_BUFFER, 	// Copy to GPU target
-			sizeof(vertices),           // # bytes
-			vertices,	      	        // address
-			GL_STATIC_DRAW);	      	// we do not change later
+		glBufferData(GL_ARRAY_BUFFER, 	
+			sizeof(vertices),           
+			vertices,	      	        
+			GL_STATIC_DRAW);	      	
 	}
 
 	void Draw() {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glEnableVertexAttribArray(0);  // AttribArray 0
-		glVertexAttribPointer(0,       // vbo -> AttribArray 0
-			2, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+		glEnableVertexAttribArray(0);  
+		glVertexAttribPointer(0,       
+			2, GL_FLOAT, GL_FALSE, 
 			5 * sizeof(float), NULL);
 
-		glEnableVertexAttribArray(1);  // AttribArray 0
-		glVertexAttribPointer(1,       // vbo -> AttribArray 0
-			3, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+		glEnableVertexAttribArray(1); 
+		glVertexAttribPointer(1,       
+			3, GL_FLOAT, GL_FALSE, 
 			5 * sizeof(float), (void *)(2 * sizeof(float)));
 
 
@@ -576,8 +575,6 @@ public:
 		controlpoints = ctrlps;
 		color = vec3(0.0f, 1.0f, 0.0f);
 
-		
-		//AddPoint(1.3f, 0.5f);
 	}
 
 		vec2 GetLinePoint(float t,
@@ -596,12 +593,11 @@ public:
 		float q3 = -2.0f*ttt + 3.0f*tt;
 		float q4 = ttt - tt;
 
-		
-		//vec2 d0 = (p1 - p0) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + (p2 - p1) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
-		//vec2 d1 = (p2 - p1) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + (p3 - p2) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
 
 		vec2 d0 = ((p1 - p0) * (1.0f / (p1.x - p0.x))) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + ((p2 - p1) * (1.0f / (p2.x - p1.x))) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
 		vec2 d1 = ((p2 - p1) * (1.0f / (p2.x - p1.x))) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + ((p3 - p2) * (1.0f / (p3.x - p2.x))) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
+
+	
 
 		vec2 D0 = normalize(d0);
 		vec2 D1 = normalize(d1);
@@ -614,7 +610,7 @@ public:
 		void GetPointsOfLine() {
 			linepoints.clear();
 			for (int i = 1; i < controlpoints.size()-2; i++) {
-				float s =1.0f / 10000.0f ;
+				float s =1.0f / 1000.0f ;
 				for (float j = 0; j < 1.0f ; j += s) {
 					vec2 p = GetLinePoint(j, controlpoints[i - 1], controlpoints[i], controlpoints[i + 1], controlpoints[i + 2]);
 					linepoints.push_back(p);
@@ -657,7 +653,7 @@ public:
 			sort();
 		}
 
-		void Update() {
+		void Create() {
 			
 			std::vector<vec2> tmp;
 			GetPointsOfLine();
@@ -671,7 +667,7 @@ public:
 				vertices.push_back(color.x);
 				vertices.push_back(color.y);
 				vertices.push_back(color.z);
-				//printf("\n %f   %f", tmp[i].x, tmp[i].y);
+				
 			}
 
 			
@@ -682,19 +678,19 @@ public:
 
 			glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-			glBufferData(GL_ARRAY_BUFFER, 	// Copy to GPU target
-				vertices.size() * sizeof(float),           // # bytes
-				&vertices[0],	      	        // address
-				GL_STATIC_DRAW);	      	// we do not change later
+			glBufferData(GL_ARRAY_BUFFER, 	
+				vertices.size() * sizeof(float),          
+				&vertices[0],	      	       
+				GL_STATIC_DRAW);	      	
 			
-			glEnableVertexAttribArray(0);  // AttribArray 0
-			glVertexAttribPointer(0,       // vbo -> AttribArray 0
-				2, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+			glEnableVertexAttribArray(0);  
+			glVertexAttribPointer(0,       
+				2, GL_FLOAT, GL_FALSE, 
 				5 * sizeof(float), NULL);
 
-			glEnableVertexAttribArray(1);  // AttribArray 0
-			glVertexAttribPointer(1,       // vbo -> AttribArray 0
-				3, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
+			glEnableVertexAttribArray(1);  
+			glVertexAttribPointer(1,       
+				3, GL_FLOAT, GL_FALSE, 
 				5 * sizeof(float), (void *)(2 * sizeof(float)));
 
 			glDrawArrays(GGL_STRING, 0 /*startIdx*/, linepoints.size()  /*# Elements*/);
@@ -702,8 +698,8 @@ public:
 		}
 	};
 
-	GPUProgram gpuProgram; // vertex and fragment shaders
-	unsigned int vao;	   // virtual world on the GPU
+	GPUProgram gpuProgram; 
+	unsigned int vao;	   
 
 	Circle ccc;
 	LineStrip path;
@@ -715,48 +711,51 @@ public:
 	float diff;
 
 
-	// Initialization, create an OpenGLcontext
+	
 	void onInitialization() {
 		glViewport(0, 0, windowWidth, windowHeight);
 		glLineWidth(1.5);
 
-		glGenVertexArrays(1, &vao);	// get 1 vao id
-		glBindVertexArray(vao);		// make it active
+		glGenVertexArrays(1, &vao);	
+		glBindVertexArray(vao);		
 
 		
 	
-		//kerék
+		
 		ccc = Circle(0.08f, vec2(0.0f, 0.0f), vec3(1.0f, 0.0f, 0.0f));
 
-		//ülés
+		
 		seet = Seet(ccc);
 
-		//ember
+		
 		bela = CycleUser(seet);
 
-		//laba
-		belalegs = Leg(ccc, bela);
 		
-		path = LineStrip({ vec2(-2.0f, 0.0f), vec2(-1.5f, -0.8f), vec2(1.7f, -0.6f), vec2(2.0f, 0.0f) }, -0.1f);
-		path.Update();
+		belalegs = Leg(ccc, bela);
 
-		mountain = LineStrip({ vec2(-2.0f, 0.32f), vec2(-1.5f, -0.48f), vec2(1.7f, -0.28f), vec2(2.0f, 0.32f) }, 0.5f);
-		mountain.Update();
+		mountain = LineStrip({ vec2(-2.0f, 0.52f), vec2(-1.5f, 0.22f), vec2(1.7f, 0.22f), vec2(2.0f, 0.32f) }, 0.1f);
+		mountain.Create();
+		
+		path = LineStrip({ vec2(-2.0f, 0.4f), vec2(-1.5f, -0.1f), vec2(1.7f, 0.0f), vec2(2.0f, -0.1f) }, -0.1f);
+		path.Create();
 
-		// create program for the GPU
+		
+
+		
 		gpuProgram.Create(vertexSource, fragmentSource, "outColor");
 	}
 
-	// Window has become invalid: Redraw
+	
 	void onDisplay() {
-		glClearColor(0, 0, 0, 0);     // background color
-		glClear(GL_COLOR_BUFFER_BIT); // clear frame buffer
+		glClearColor(0, 0, 0, 0);     
+		glClear(GL_COLOR_BUFFER_BIT); 
 
-		 // Set color to (0, 1, 0) = green
-		int location = glGetUniformLocation(gpuProgram.getId(), "color");
 		
-		float MVPtransf[4][4] = { 1, 0, 0, 0,    // MVP matrix, 
-								  0, 1, 0, 0,    // row-major!
+		int location = glGetUniformLocation(gpuProgram.getId(), "color");
+		//glUniform3f(location, 1.0f, 0.0f, 0.0f);
+
+		float MVPtransf[4][4] = { 1, 0, 0, 0,    
+								  0, 1, 0, 0,    
 								  0, 0, 1, 0,
 								  0, 0, 0, 1 };
 
@@ -771,49 +770,49 @@ public:
 		path.Draw();
 		
 
-		location = glGetUniformLocation(gpuProgram.getId(), "MVP"); // Get the GPU location of uniform variable MVP
-		glUniformMatrix4fv(location, 1, GL_TRUE, &ccc.MVPtransf[0][0]);	// Load a 4x4 row-major float matrix to the specified location
+		location = glGetUniformLocation(gpuProgram.getId(), "MVP"); 
+		glUniformMatrix4fv(location, 1, GL_TRUE, &ccc.MVPtransf[0][0]);	
 
-		ccc.Update();
+		ccc.Create();
 		ccc.Draw();
 		
 
 		location = glGetUniformLocation(gpuProgram.getId(), "MVP"); 
 		glUniformMatrix4fv(location, 1, GL_TRUE, &seet.MVPtransf[0][0]);
 
-		seet.Update();
+		seet.Create();
 		seet.Draw();
 
 
 		location = glGetUniformLocation(gpuProgram.getId(), "MVP");
 		glUniformMatrix4fv(location, 1, GL_TRUE, &bela.MVPtransf[0][0]);
 
-		bela.Update();
+		bela.Create();
 		bela.Draw();
 
 		location = glGetUniformLocation(gpuProgram.getId(), "MVP");
 		glUniformMatrix4fv(location, 1, GL_TRUE, &belalegs.MVPtransf[0][0]);
 
-		belalegs.Update();
+		belalegs.Create();
 		belalegs.Draw();
 
 		
 
-		glutSwapBuffers(); // exchange buffers for double buffering
+		glutSwapBuffers(); 
 	}
 
-	// Key of ASCII code pressed
+	
 	void onKeyboard(unsigned char key, int pX, int pY) {
-		if (key == 'd') glutPostRedisplay();         // if d, invalidate display, i.e. redraw
+		if (key == 'd') glutPostRedisplay();         
 	}
 
-	// Key of ASCII code released
+	
 	void onKeyboardUp(unsigned char key, int pX, int pY) {
 	}
 
-	// Move mouse with key pressed
-	void onMouseMotion(int pX, int pY) {	// pX, pY are the pixel coordinates of the cursor in the coordinate system of the operation system
-		// Convert to normalized device space
+	
+	void onMouseMotion(int pX, int pY) {	
+		
 		float cX = 2.0f * pX / windowWidth - 1;	// flip y axis
 		float cY = 1.0f - 2.0f * pY / windowHeight;
 		printf("Mouse moved to (%3.2f, %3.2f)\n", cX, cY);
@@ -837,11 +836,11 @@ public:
 			//printf("Left button %s at (%3.2f, %3.2f)\n", buttonStat, cX, cY);
 			if (buttonStat == "pressed") {
 				path.AddPoint(cX, cY);
-				path.Update();
+				path.Create();
 
 				mountain.AddPoint(cX, cY + 0.32f);
-				mountain.Update();
-				glutPostRedisplay();
+				mountain.Create();
+			
 			}
 			break;
 
@@ -853,29 +852,39 @@ public:
 	// Idle event indicating that some time elapsed: do animation here
 	void onIdle() {
 		long time = glutGet(GLUT_ELAPSED_TIME); // elapsed time since the start of the program
-		float sec = time / 250.0f;  
+		float sec = time / 150.0f;  
 
-		monocyclepos = vec2( ccc.center.x + ccc.speed.x,  ccc.center.y + ccc.speed.y - ccc.radius );
-		for (int i = 0; i < path.linepoints.size(); i++) {
-			if (monocyclepos.x < path.linepoints[i].x + 0.1f && monocyclepos.x > path.linepoints[i].x - 0.1f) {
-				if ((-1.0f * (monocyclepos.y - path.linepoints[i].y)) != 0.0f) {
-					diff = (-1.0f * (monocyclepos.y - path.linepoints[i].y));
+		monocyclepos = vec2( ccc.center.x + ccc.speed.x,  ccc.center.y + ccc.speed.y - ccc.radius  );
+		
+		std::vector<vec2> asd = path.makeline();
+		for (int i = 0; i < asd.size(); i += 1) {
+			if (monocyclepos.x  < asd[i].x + 0.003f && monocyclepos.x > asd[i].x - 0.003f) {
+				if (monocyclepos.y > asd[i].y) {
+					if (-1.0f *(monocyclepos.y - asd[i].y) > 0.0f) {
+						diff = ((monocyclepos.y - asd[i].y));
+					}
+					else { diff = -1.0f *(monocyclepos.y - asd[i].y); }
 				}
-				else
-				{
-					break;
+				else if (monocyclepos.y < asd[i].y) {
+					if (-1.0f * (monocyclepos.y - asd[i].y) < 0.0f) {
+						diff = ( (monocyclepos.y - asd[i].y));
+					}
+					else { diff = (-1.0f * (monocyclepos.y - asd[i].y)); }
+				}
+				else if (monocyclepos.y == asd[i].y) {
+					diff = 0.0f;
 				}
 			}
 		}
 		
-		//printf("\n %f", diff);
+		
 
 
-		//ide a dolgok
-		ccc.Animate(sec, 0.0002f, diff);
-		seet.Animate(0.0002f, diff);
-		bela.Animate(0.0002f, diff);
-		belalegs.Animation(sec, 0.0002f, diff);
+	
+		ccc.Animate(sec, 0.0005f,  diff);
+		seet.Animate(0.0005f, diff);
+		bela.Animate(0.0005f, diff);
+		belalegs.Animation(sec, 0.0005f, diff);
 
 		glutPostRedisplay();
 	}
