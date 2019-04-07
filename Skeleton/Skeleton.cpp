@@ -65,6 +65,9 @@ const char * const fragmentSource = R"(
 	}
 )";
 
+vec2 monocyclepos;
+vec2 pathpos;
+
 class Circle{
 
 public:
@@ -89,11 +92,14 @@ public:
 		state = false;
 	}
 
-	void Animate(float rot, float transl) {
+	void Animate(float rot, float transl, float pos) {
+
+		
 
 			if (state == false ) {
 				rotation = rot;
 				speed.x -= transl;
+				speed.y = pos;
 				if (speed.x < -1.0f) {
 					state = true;
 				}
@@ -102,6 +108,7 @@ public:
 			if(state == true){
 				rotation = -rot;
 				speed.x += transl;
+				speed.y = pos;
 				if (speed.x > 1.0f) {
 					state = false;
 				}
@@ -126,7 +133,7 @@ public:
 		MVPtransf[1][1] = cosf(rotation);
 
 		MVPtransf[3][0] = speed.x;
-	
+		MVPtransf[3][1] = speed.y;
 
 		float radian = 2 * M_PI;
 		float vertices[655];
@@ -180,6 +187,7 @@ public:
 		vertices[633] = color.y;
 		vertices[634] = color.z;
 	
+		
 
 		glBufferData(GL_ARRAY_BUFFER, 	// Copy to GPU target
 			sizeof(vertices),           // # bytes
@@ -227,10 +235,11 @@ public:
 		state = false;
 	}
 
-	void Animate(float transl) {
-
+	void Animate(float transl, float pos) {
+		
 		if (state == false) {
 			speed.x -= transl;
+			speed.y = pos;
 			if (speed.x < -1.0f) {
 				state = true;
 			}
@@ -238,6 +247,7 @@ public:
 
 		if (state == true) {
 			speed.x += transl;
+			speed.y = pos;
 			if (speed.x > 1.0f) {
 				state = false;
 			}
@@ -254,6 +264,7 @@ public:
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 		MVPtransf[3][0] = speed.x;
+		MVPtransf[3][1] = speed.y;
 
 		float vertices[20];
 
@@ -334,9 +345,10 @@ public:
 		state = false; //kezdetben jobbra 
 	}
 
-	void Animate(float transl) {
-
+	void Animate(float transl, float pos) {
+	
 		if (state == false) {
+			speed.y = pos;
 			speed.x -= transl;
 			if (speed.x < -1.0f) {
 				state = true;
@@ -344,6 +356,7 @@ public:
 		}
 
 		if (state == true) {
+			speed.y = pos;
 			speed.x += transl;
 			if (speed.x > 1.0f) {
 				state = false;
@@ -356,6 +369,7 @@ public:
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 		MVPtransf[3][0] = speed.x;
+		MVPtransf[3][1] = speed.y;
 
 		float radian = 2 * M_PI;
 		float vertices[610];
@@ -446,11 +460,12 @@ public:
 							  0, 0, 1, 0,
 							  0, 0, 0, 1 };
 
-	void Animation(float r, float transl) {
+	void Animation(float r, float transl, float pos) {
 		
 		if (state == false) {
 			rot = r;
 			speed.x -= transl;
+			speed.y = pos;
 			if (speed.x < -1.0f) {
 				state = true;
 			}
@@ -459,6 +474,7 @@ public:
 		if (state == true) {
 			rot = -r;
 			speed.x += transl;
+			speed.y = pos;
 			if (speed.x > 1.0f) {
 				state = false;
 			}
@@ -470,6 +486,7 @@ public:
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 		MVPtransf[3][0] = speed.x;
+		MVPtransf[3][1] = speed.y;
 
 		float x = attachetopedal.x;
 		float y = attachetopedal.y;
@@ -534,25 +551,31 @@ public:
 };
 
 class LineStrip {
+public:
 	unsigned int vbo;
 	std::vector<vec2> controlpoints;
 	std::vector<vec2> linepoints;
 
 	float p0, p1, p2, p3;
 	float tension;
+	float bias;
+	float continuity;
 
 	vec3 color;
 
 	std::vector<float> vertices;
 
-public:
+
 
 	LineStrip() {}
 
-	LineStrip(std::vector<vec2> ctrlps, float _tension) {
+	LineStrip(std::vector<vec2> ctrlps, float _tension, float _bias = 0, float _continuity = 0) {
 		tension = _tension;
+		bias = _bias;
+		continuity = _continuity;
 		controlpoints = ctrlps;
 		color = vec3(0.0f, 1.0f, 0.0f);
+
 		
 		//AddPoint(1.3f, 0.5f);
 	}
@@ -563,27 +586,29 @@ public:
 		vec2 p2,
 		vec2 p3
 	) {
+		
 
 		float tt = t * t;
 		float ttt = tt * t;
 
-		float q1 = 2 * ttt - 3.0f*tt - 1.0f ;
+		float q1 = 2.0f * ttt - 3.0f*tt + 1.0f ;
 		float q2 = ttt - 2.0f*tt + t;
 		float q3 = -2.0f*ttt + 3.0f*tt;
 		float q4 = ttt - tt;
 
 		
-		vec2 d0 = (p1 - p0) * (1.0f - tension) + (p2 - p1) * (1.0f - tension);
-		vec2 d1 = (p2 - p1) * (1.0f - tension) + (p3 - p2) * (1.0f - tension);
+		vec2 d0 = (p1 - p0) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + (p2 - p1) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
+		vec2 d1 = (p2 - p1) * ((1.0f - tension)*(1.0f + bias)*(1.0f + continuity)) + (p3 - p2) * ((1.0f - tension)*(1.0f - bias)*(1.0f - continuity));
 
+		vec2  res = p1 * q1 + d0 * q2 + p2 * q3 + d1 * q4;
 		
-		return (p1 * q1 + p2* d0 + p3 * q3 + d1 * q4);
+		return(res);
 	}
 
-		void pointsofspline() {
-
+		void GetPointsOfLine() {
+			linepoints.clear();
 			for (int i = 1; i < controlpoints.size()-2; i++) {
-				float s = 1.0f / 200.0f ;
+				float s =1.0f / 10000.0f ;
 				for (float j = 0; j < 1.0f ; j += s) {
 					vec2 p = GetLinePoint(j, controlpoints[i - 1], controlpoints[i], controlpoints[i + 1], controlpoints[i + 2]);
 					linepoints.push_back(p);
@@ -592,7 +617,7 @@ public:
 		}
 
 		std::vector<vec2> makeline() {
-			pointsofspline();
+			GetPointsOfLine();
 			return linepoints;
 		}
 
@@ -605,13 +630,17 @@ public:
 			}
 		}
 
-		void sort(std::vector<vec2> needsort) {
-			for (int i = needsort.size()-1; i > 0 ; --i) {
+		int numberofpoints() {
+			return linepoints.size();
+		}
+
+		void sort() {
+			for (int i = controlpoints.size()-1; i > 0 ; --i) {
 				for (int j = 0; j < i; j++) {
-					if (greaterthan(needsort[j], needsort[j + 1])) {
-						vec2 temp = needsort[j];
-						needsort[j] = needsort[j + 1];
-						needsort[j + 1] = temp;
+					if (greaterthan(controlpoints[j], controlpoints[j + 1])) {
+						vec2 temp = controlpoints[j];
+						controlpoints[j] = controlpoints[j + 1];
+						controlpoints[j + 1] = temp;
 					}
 				}
 			}
@@ -619,21 +648,24 @@ public:
 
 		void AddPoint(float cX, float cY) {
 			controlpoints.push_back(vec2(cX, cY));
-			sort(controlpoints);
-		
+			sort();
 		}
 
 		void Update() {
 			
 			std::vector<vec2> tmp;
-			tmp = makeline();
+			GetPointsOfLine();
+			tmp = linepoints;
+			
+			vertices.clear();
 
 			for (int i = 0; i < tmp.size(); i++) {
-				vertices.push_back(linepoints[i].x);
-				vertices.push_back(linepoints[i].y);
+				vertices.push_back(tmp[i].x);
+				vertices.push_back(tmp[i].y);
 				vertices.push_back(color.x);
 				vertices.push_back(color.y);
 				vertices.push_back(color.z);
+				//printf("\n %f   %f", tmp[i].x, tmp[i].y);
 			}
 
 			
@@ -645,7 +677,7 @@ public:
 			glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 			glBufferData(GL_ARRAY_BUFFER, 	// Copy to GPU target
-				sizeof(vertices),           // # bytes
+				vertices.size() * sizeof(float),           // # bytes
 				&vertices[0],	      	        // address
 				GL_STATIC_DRAW);	      	// we do not change later
 			
@@ -659,7 +691,7 @@ public:
 				3, GL_FLOAT, GL_FALSE, // two floats/attrib, not fixed-point
 				5 * sizeof(float), (void *)(2 * sizeof(float)));
 
-			glDrawArrays(GL_LINE_STRIP, 0 /*startIdx*/, linepoints.size()  /*# Elements*/);
+			glDrawArrays(GGL_STRING, 0 /*startIdx*/, linepoints.size()  /*# Elements*/);
 
 		}
 	};
@@ -674,13 +706,18 @@ public:
 	CycleUser bela;
 	Leg belalegs;
 
+	float diff;
+
+
 	// Initialization, create an OpenGLcontext
 	void onInitialization() {
 		glViewport(0, 0, windowWidth, windowHeight);
+		glLineWidth(1.5);
 
 		glGenVertexArrays(1, &vao);	// get 1 vao id
 		glBindVertexArray(vao);		// make it active
 
+		
 	
 		//kerék
 		ccc = Circle(0.08f, vec2(0.0f, 0.0f), vec3(1.0f, 0.0f, 0.0f));
@@ -694,8 +731,11 @@ public:
 		//laba
 		belalegs = Leg(ccc, bela);
 		
-		path = LineStrip({ vec2(-2.0f, 0.0f), vec2(-1.3f, -0.6f), vec2(1.3f, -0.6f), vec2(2.0f, 0.0f) }, -1.0f);
+		path = LineStrip({ vec2(-2.0f, 0.0f), vec2(-1.5f, -0.8f), vec2(1.7f, -0.6f), vec2(2.0f, 0.0f) }, -0.5f);
 		path.Update();
+
+		mountain = LineStrip({ vec2(-2.0f, 0.32f), vec2(-1.5f, -0.48f), vec2(1.7f, -0.28f), vec2(2.0f, 0.32f) }, 0.5f);
+		mountain.Update();
 
 		// create program for the GPU
 		gpuProgram.Create(vertexSource, fragmentSource, "outColor");
@@ -706,38 +746,38 @@ public:
 		glClearColor(0, 0, 0, 0);     // background color
 		glClear(GL_COLOR_BUFFER_BIT); // clear frame buffer
 
-
 		 // Set color to (0, 1, 0) = green
 		int location = glGetUniformLocation(gpuProgram.getId(), "color");
-		//glUniform3f(location, 0.0f, 1.0f, 0.0f); // 3 floats
-
+		
 		float MVPtransf[4][4] = { 1, 0, 0, 0,    // MVP matrix, 
 								  0, 1, 0, 0,    // row-major!
 								  0, 0, 1, 0,
-							  0, 0, 0, 1 };
+								  0, 0, 0, 1 };
 
-		//location = glGetUniformLocation(gpuProgram.getId(), "MVP");	// Get the GPU location of uniform variable MVP
-		//glUniformMatrix4fv(location, 1, GL_TRUE, &MVPtransf[0][0]);	// Load a 4x4 row-major float matrix to the specified location
+		location = glGetUniformLocation(gpuProgram.getId(), "MVP");
+		glUniformMatrix4fv(location, 1, GL_TRUE, &MVPtransf[0][0]);
 
-		//glBindVertexArray(vao);  // Draw call
-		//glDrawArrays(GL_TRIANGLES, 0 /*startIdx*/, 3 /*# Elements*/);
+		mountain.Draw();
 
 		location = glGetUniformLocation(gpuProgram.getId(), "MVP");
 		glUniformMatrix4fv(location, 1, GL_TRUE, &MVPtransf[0][0]);
 
 		path.Draw();
+		
 
 		location = glGetUniformLocation(gpuProgram.getId(), "MVP"); // Get the GPU location of uniform variable MVP
 		glUniformMatrix4fv(location, 1, GL_TRUE, &ccc.MVPtransf[0][0]);	// Load a 4x4 row-major float matrix to the specified location
 
 		ccc.Update();
 		ccc.Draw();
+		
 
 		location = glGetUniformLocation(gpuProgram.getId(), "MVP"); 
 		glUniformMatrix4fv(location, 1, GL_TRUE, &seet.MVPtransf[0][0]);
 
 		seet.Update();
 		seet.Draw();
+
 
 		location = glGetUniformLocation(gpuProgram.getId(), "MVP");
 		glUniformMatrix4fv(location, 1, GL_TRUE, &bela.MVPtransf[0][0]);
@@ -752,7 +792,6 @@ public:
 		belalegs.Draw();
 
 		
-
 
 		glutSwapBuffers(); // exchange buffers for double buffering
 	}
@@ -792,6 +831,10 @@ public:
 			//printf("Left button %s at (%3.2f, %3.2f)\n", buttonStat, cX, cY);
 			if (buttonStat == "pressed") {
 				path.AddPoint(cX, cY);
+				path.Update();
+
+				mountain.AddPoint(cX, cY + 0.32f);
+				mountain.Update();
 				glutPostRedisplay();
 			}
 			break;
@@ -804,13 +847,23 @@ public:
 	// Idle event indicating that some time elapsed: do animation here
 	void onIdle() {
 		long time = glutGet(GLUT_ELAPSED_TIME); // elapsed time since the start of the program
-		float sec = time / 250.0f;  //ez lesz a forgás sebessége? 
+		float sec = time / 250.0f;  
+
+		monocyclepos = vec2( ccc.center.x + ccc.speed.x,  ccc.center.y + ccc.speed.y - ccc.radius );
+		for (int i = 0; i < path.linepoints.size(); i++) {
+			if (monocyclepos.x < path.linepoints[i].x + 0.01f && monocyclepos.x > path.linepoints[i].x - 0.01f) {
+				diff = (-1.0f * (monocyclepos.y - path.linepoints[i].y)) ;
+			}
+		}
+		
+		//printf("\n %f ", diff);
+
 
 		//ide a dolgok
-		ccc.Animate(sec, 0.0003f);
-		seet.Animate(0.0003f);
-		bela.Animate(0.0003f);
-		belalegs.Animation(sec, 0.0003f);
+		ccc.Animate(sec, 0.0002f, diff);
+		seet.Animate(0.0002f, diff);
+		bela.Animate(0.0002f, diff);
+		belalegs.Animation(sec, 0.0002f, diff);
 
 		glutPostRedisplay();
 	}
