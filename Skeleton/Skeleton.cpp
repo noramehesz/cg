@@ -115,10 +115,7 @@ public:
 	}
 
 
-	float MVPtransf[4][4] = { 1, 0, 0, 0,    
-							  0, 1, 0, 0,    
-							  0, 0, 1, 0,
-							  0, 0, 0, 1 };
+	float MVPtransf[4][4] = { {1, 0, 0, 0}, {0, 1, 0, 0 }, {0, 0, 1, 0},  {0, 0, 0, 1} };
 
 
 	void Create() {
@@ -206,7 +203,7 @@ public:
 			5 * sizeof(float), (void *)(2 * sizeof(float)));
 
 
-		glDrawArrays(GGL_STRING, 0 /*startIdx*/, 127/*# Elements*/);
+		glDrawArrays(GL_LINE_STRIP, 0 /*startIdx*/, 127/*# Elements*/);
 	}
 };
 
@@ -253,16 +250,13 @@ public:
 
 	}
 
-	float MVPtransf[4][4] = { 1, 0, 0, 0,    
-							  0, 1, 0, 0,    
-							  0, 0, 1, 0,
-							  0, 0, 0, 1 };
+	float MVPtransf[4][4] = { {1, 0, 0, 0}, {0, 1, 0, 0 }, {0, 0, 1, 0},  {0, 0, 0, 1} };
 
 	void Create() {
 		
 
 		MVPtransf[3][0] = speed.x;
-		MVPtransf[3][1] = speed.y;
+		MVPtransf[3][1] = speed.y;  
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
@@ -312,7 +306,7 @@ public:
 			5 * sizeof(float), (void *)(2 * sizeof(float)));
 
 
-		glDrawArrays(GGL_STRING, 0 /*startIdx*/, 4/*# Elements*/);
+		glDrawArrays(GL_LINE_STRIP, 0 /*startIdx*/, 4/*# Elements*/);
 	}
 
 };
@@ -330,10 +324,7 @@ public:
 
 	CycleUser(){}
 
-	float MVPtransf[4][4] = { 1, 0, 0, 0,    
-							  0, 1, 0, 0,    
-							  0, 0, 1, 0,
-							  0, 0, 0, 1 };
+	float MVPtransf[4][4] = { {1, 0, 0, 0}, {0, 1, 0, 0 }, {0, 0, 1, 0},  {0, 0, 0, 1} };
 
 	CycleUser(Seet s) {
 		glGenBuffers(1, &vbo);
@@ -415,7 +406,7 @@ public:
 			5 * sizeof(float), (void *)(2 * sizeof(float)));
 
 
-		glDrawArrays(GGL_STRING, 0 /*startIdx*/, 122/*# Elements*/);
+		glDrawArrays(GL_LINE_STRIP, 0 /*startIdx*/, 122/*# Elements*/);
 	}
 
 
@@ -455,10 +446,7 @@ public:
 		state = false; //jobbra
 	}
 
-	float MVPtransf[4][4] = { 1, 0, 0, 0,    
-							  0, 1, 0, 0,    
-							  0, 0, 1, 0,
-							  0, 0, 0, 1 };
+	float MVPtransf[4][4] = { {1, 0, 0, 0}, {0, 1, 0, 0 }, {0, 0, 1, 0},  {0, 0, 0, 1} };
 
 	void Animation(float r, float transl, float pos) {
 		speed.y = pos;
@@ -481,8 +469,7 @@ public:
 
 	}
 
-	void Create() {
-		
+	void Create() {	
 
 		MVPtransf[3][0] = speed.x;
 		MVPtransf[3][1] = speed.y;
@@ -544,7 +531,7 @@ public:
 			5 * sizeof(float), (void *)(2 * sizeof(float)));
 
 
-		glDrawArrays(GGL_STRING, 0 /*startIdx*/, 3/*# Elements*/);
+		glDrawArrays(GL_LINE_STRIP, 0 /*startIdx*/, 3/*# Elements*/);
 	}
 
 };
@@ -559,6 +546,7 @@ public:
 	float tension;
 	float bias;
 	float continuity;
+	bool ismountain;
 
 	vec3 color;
 
@@ -568,12 +556,13 @@ public:
 
 	LineStrip() {}
 
-	LineStrip(std::vector<vec2> ctrlps, float _tension, float _bias = 0, float _continuity = 0) {
+	LineStrip(std::vector<vec2> ctrlps, bool im, float _tension, float _bias = 0, float _continuity = 0) {
 		tension = _tension;
 		bias = _bias;
 		continuity = _continuity;
 		controlpoints = ctrlps;
 		color = vec3(0.0f, 1.0f, 0.0f);
+		ismountain = im;
 
 	}
 
@@ -654,11 +643,11 @@ public:
 		}
 
 		void Create() {
-			
+
 			std::vector<vec2> tmp;
 			GetPointsOfLine();
 			tmp = linepoints;
-			
+
 			vertices.clear();
 
 			for (int i = 0; i < tmp.size(); i++) {
@@ -667,10 +656,11 @@ public:
 				vertices.push_back(color.x);
 				vertices.push_back(color.y);
 				vertices.push_back(color.z);
-				
+
 			}
 
 			
+
 		}
 			
 
@@ -693,7 +683,9 @@ public:
 				3, GL_FLOAT, GL_FALSE, 
 				5 * sizeof(float), (void *)(2 * sizeof(float)));
 
-			glDrawArrays(GGL_STRING, 0 /*startIdx*/, linepoints.size()  /*# Elements*/);
+			glDrawArrays(GL_LINE_STRIP, 0 /*startIdx*/, linepoints.size()  /*# Elements*/);
+
+			
 
 		}
 	};
@@ -733,10 +725,10 @@ public:
 		
 		belalegs = Leg(ccc, bela);
 
-		mountain = LineStrip({ vec2(-2.0f, 0.52f), vec2(-1.5f, 0.22f), vec2(1.7f, 0.22f), vec2(2.0f, 0.32f) }, 0.1f);
+		mountain = LineStrip({ vec2(-2.0f, 0.52f), vec2(-1.5f, 0.22f), vec2(1.7f, 0.22f), vec2(2.0f, 0.32f) }, true, 0.1f);
 		mountain.Create();
 		
-		path = LineStrip({ vec2(-2.0f, 0.4f), vec2(-1.5f, -0.1f), vec2(1.7f, 0.0f), vec2(2.0f, -0.1f) }, -0.1f);
+		path = LineStrip({ vec2(-2.0f, 0.4f), vec2(-1.5f, -0.1f), vec2(1.7f, 0.0f), vec2(2.0f, -0.1f) }, false, -0.1f);
 		path.Create();
 
 		
@@ -752,12 +744,9 @@ public:
 
 		
 		int location = glGetUniformLocation(gpuProgram.getId(), "color");
-		//glUniform3f(location, 1.0f, 0.0f, 0.0f);
+	
 
-		float MVPtransf[4][4] = { 1, 0, 0, 0,    
-								  0, 1, 0, 0,    
-								  0, 0, 1, 0,
-								  0, 0, 0, 1 };
+		float MVPtransf[4][4] = { {1, 0, 0, 0}, {0, 1, 0, 0 }, {0, 0, 1, 0},  {0, 0, 0, 1} };
 
 		location = glGetUniformLocation(gpuProgram.getId(), "MVP");
 		glUniformMatrix4fv(location, 1, GL_TRUE, &MVPtransf[0][0]);
@@ -878,8 +867,6 @@ public:
 		}
 		
 		
-
-
 	
 		ccc.Animate(sec, 0.0005f,  diff);
 		seet.Animate(0.0005f, diff);
